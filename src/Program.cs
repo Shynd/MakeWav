@@ -8,19 +8,19 @@ namespace MakeWav
 	/// This program basically takes a file you give it and prepends
 	/// a wave file header to it which makes it a playable audio file.
 	/// </summary>
-    class Program
-    {
-        static void Main(string[] args)
-        {						
+	class Program
+	{
+        	static void Main(string[] args)
+        	{						
 			if (args.Length < 1)
 				ExitWithReason("No file given.");
-			
+
 			if (!File.Exists(args[0]))
 				ExitWithReason("File does not exist.");
-			
+
 			// load a file as bytes
 			var fileBytes = File.ReadAllBytes(args[0]);
-			
+
 			Logger.Log(LogLevel.Info, "Creating WAV file header structure...");
 			var wav = new Wav();
 			wav.Header = new WAVHEADER
@@ -40,25 +40,25 @@ namespace MakeWav
 				// Insert the "sound" data length.
 				DataSize = (uint) fileBytes.Length,
 			};
-			
+
 			// Calculate the bytes per second.
 			Logger.Log(LogLevel.Info, "Calculating the bytes per second needed...");
 			wav.Header.BytesPerSec = (wav.Header.SampleRate * wav.Header.Bit * wav.Header.Channels) / 8;
 			// Change block size - (BitsPerSample * Channels) / 8.1 - 8 bit mono2 - 8 bit stereo/16 bit mono4 - 16 bit stereo 
 			Logger.Log(LogLevel.Info, "Setting the block size...");
 			wav.Header.BlockSize = (ushort) ((wav.Header.Bit * wav.Header.Channels) / 8);
-			
+
 			// Set the "Size" variable in the header (overall file-size - 8 bytes).
 			Logger.Log(LogLevel.Info, "Calculating the file size...");
 			wav.Header.Size = wav.Header.DataSize - 8;
-			
+
 			// Insert the "sound" data bytes.
 			Logger.Log(LogLevel.Info, $"Writing the sound data to the file... ({fileBytes.Length} bytes)");
 			wav.Data = fileBytes;
-			
+
 			// Print info about the file.
 			wav.PrintHeader();
-			
+
 			// Write the wav to a MemoryStream
 			var outputBytes = wav.Write();
 			// Create the output filename
@@ -68,25 +68,23 @@ namespace MakeWav
 			Logger.Log(LogLevel.Info, $"Writing output file to '{outputName}'...");
 			File.WriteAllBytes(outputName, outputBytes);
 			Logger.Log(LogLevel.Normal, "Success!");
-        }
+		}
 		
 		static void ExitWithReason(string reason)
 		{
 			Logger.Log(LogLevel.Error, reason);
 			Environment.Exit(-1);
 		}
-    }
+	}
 	
 	public static class Extensions
 	{
 		public static string BytesToString(this byte[] args) => Encoding.ASCII.GetString(args);
-		
+
 		public static byte[] ToBytes(this uint args) => BitConverter.GetBytes(args);
 		public static byte[] ToBytes(this ushort args) => BitConverter.GetBytes(args);
 		public static byte[] ToBytes(this string str) => Encoding.ASCII.GetBytes(str);
 	}
-	
-	// ---------------------------------------------------------------------------------------------------------
 	
 	public abstract class FileParser<TFormat> where TFormat : FileParser<TFormat>, new()
 	{
